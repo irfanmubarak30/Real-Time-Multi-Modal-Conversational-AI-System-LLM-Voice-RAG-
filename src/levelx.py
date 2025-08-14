@@ -202,7 +202,7 @@ class ChatBot:
             temperature=1,
         )
         
-        # 4. Setup Vector Store and RAG Chain
+        # 4. --Setup Vector Store and RAG Chain---
         docsearch = self._initialize_pinecone()
         self.rag_chain = self._create_rag_chain(docsearch)
         
