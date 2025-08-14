@@ -720,7 +720,7 @@ class WhatsAppBot:
             if session.get('survey_completed'):
                 parts.append("survey=completed")
             
-            # Extract data from the embedded ChatBot state if available
+            # .Extract data from the embedded ChatBot state if available
             chatbot = session.get('chatbot')
 
             # Add user's provided name to the summary when available
