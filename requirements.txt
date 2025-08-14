@@ -1,0 +1,23 @@
+streamlit
+openai
+pinecone
+langchain
+langchain-community
+langchain-openai
+langchain-pinecone
+python-dotenv
+langchain_google_genai
+
+flask
+twilio
+pydub
+SpeechRecognition
+requests
+python-dotenv
+
+# Google Sheets integration
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+googleapiclient
+gspread
