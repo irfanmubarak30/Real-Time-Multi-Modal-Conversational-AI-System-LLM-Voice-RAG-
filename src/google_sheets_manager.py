@@ -159,7 +159,7 @@ class GoogleSheetsManager:
         Args:
             phone_number: User's phone number to find the row
             interest_score: Interest score (0-100)
-            summary: Brief summary of the analysis
+            summary: Combined interest and chat analysis summary
         """
         if not self.users_sheet:
             logger.warning("Users sheet not available")

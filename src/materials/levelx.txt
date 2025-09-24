@@ -1,1 +1,320 @@
-Level X | Learn Coding, Digital Marketing & Data Analytics – Master In-Demand Tech Skills. Get Job-Ready. Transform Your Career. Explore Courses. Unlock tech mastery at LevelX — Coding, Marketing, Analytics — all in one place. Become industry-ready in just 6 months with hands-on projects in every course. Browse our diverse selection of tech courses, designed for beginners to advanced learners. Choose the program that aligns with your career goals and interests. Easily sign up online through our website or visit our campus for offline registration. Our team is ready to assist you through the enrollment process. Join our orientation session to meet your mentors, understand the course structure, and connect with fellow learners. Get a clear roadmap to kickstart your journey. Dive into interactive sessions, hands-on projects, and real-world scenarios. Access exclusive resources and receive dedicated support to excel in your chosen field. Our learning programs include Flutter Full Stack Development (build scalable, high-performance mobile and backend solutions using Flutter and Firebase), Digital Marketing Mastery (learn SEO, Social Media Marketing, Google Ads, and more), Data Analytics & Visualization (learn tools like Excel, Python, Power BI, and more), and React Full Stack Development (master front-end to back-end with React, Node.js, Express & MongoDB). Why LevelX? We offer 100% job placement assistance, prepare you for high-paying careers, focus on holistic skill development including communication and professional etiquette, and provide real-world experience through live and collaborative projects. Real success stories include Abdul Basith (MEAN Developer Trainee at Petro Infotech), Noushah Ali (MEAN Developer at Rideware Technologies), Muhammed Risan (Flutter Developer at TRON Digital), Muhammed Basil K (Flutter Developer at CZ App Studio), Abhimanyu (Flutter Developer at Stek Innovation), Muhammed Fahad (MERN Stack Developer at PAZL INFOLYTE), and Muhammad Sinan (Flutter Developer at Bigwelt Infotech). Got questions? Anyone passionate about coding and digital marketing can join Level X — no prior experience is required. Our full-stack courses last 6–9 months, and Digital Marketing runs for 3 months. We provide 100% placement assistance and flexible payment options. Register online or offline. Our mission is to instill skills through practical-oriented teaching that breaks conventional coding methods. Our vision is to create a positive community of tech professionals and boost employment through impactful training. We offer training in a professional ambience, lifetime career support, and expert-led classes. The course timeline includes Level 0 (3–5 day workshop), Level 1 (coding basics, Linux, GitHub, IDE, design systems), Level 2 (domain-specific advanced training for 2–4 months), and Level 3 (industrial practice, debugging, communication, and placement preparation for 4–6 months). Projects include e-commerce apps, food delivery apps, social media clones, productivity apps, and Spotify clones. Highlights include personalized mentorship, workshops, lifetime community support, and dedicated career support. The selection process involves a 3–5 day workshop, review and shortlisting based on communication and performance, counseling, and final selection. Contact us at hello@levelx.in or +91 8714 784411. Visit us at www.levelx.in or our campus near HiLite City, Thondayad Bypass, Calicut, Kerala – 673014.
+
+
+Program Introduction:
+
+In today’s job market, the ability to code is not only a valuable skill but also key to wide range of career opportunities.
+*Level X is your gateway to a world of endless possibilities in software development, web design and more.
+*Our innovative coding courses are designed to empower learners of all backgrounds, from beginners to experienced developers.
+*Gain expert guidance, tackle hands-on projects, and join a supportive tech community to enhance your skills and boost your confidence for success.
+Join us on this exciting journey, and let's write the code for your success story together.
+
+Why Level X?:
+
+ 1]Personalised Mentorship
+ 2]Best Training in the Industry
+ 2]In-Campus Classes
+ 3]Industry Projects
+ 4]Productive Learning hours
+ 5]Career Support
+ 6]Work shops
+ 7]Communication skills
+ 8]Live Profile-Building Workshops
+ 9]Lifetime Community Support
+ 10]Collaborative Learning
+
+	general questions about Training & Support:
+
+		Q: Who are the trainers? 
+		A: Our classes are conducted by industry experts with dedicated program support throughout your learning journey.
+
+		Q: What kind of projects will I work on? 
+		A: You'll work on real industry projects that give you practical experience and help build your professional portfolio.
+
+		Q: Do you provide mentorship? 
+		A: Yes, we provide personalized mentorship to guide you through your learning journey.
+	
+		Q: Is there any communication skills training? 
+		A: Yes, we include communication skills development as part of our comprehensive program.
+
+Program Highlights & Benefits:
+
+ 1]Learn From Industry Experts
+ 2]Classes by Industry Experts, along with dedicated program support
+ 3]Professional Certification
+ 4]Earn a Professional Certification to advance your career prospects
+ 5]100% Placement Assistance:
+  *Get placement assistance after completion of the course
+ 6]Industry-Ready Curriculum:
+  *Our curriculum is designed to prepare individuals for success in today's competitive job market
+
+	General Questions about levelx:
+
+ 		Q: What is Level X?
+  		A: Level X is a coding institute that offers comprehensive software development courses including Flutter Full Stack, MEAN Stack, and MERN Stack development. We provide 		industry-ready training with 100% placement assistance.
+
+ 		Q: Who can join Level X courses? 
+  		A: Our courses are designed for learners of all backgrounds, from complete beginners to experienced developers looking to enhance their skills.
+
+ 		Q: What makes Level X different from other coding institutes?
+ 		A: We offer personalized mentorship, industry expert trainers, in-campus classes, real industry projects, 100% placement assistance, and lifetime community support with 		better scholarship options compared to other institutions.
+		
+		Q: Can I learn programming on my own instead of joining an institute?
+		A: While self-learning is possible, our structured approach, mentorship, real projects, and placement support significantly accelerate your learning and career prospects
+
+Our Courses:
+
+ 1]Flutter Full Stack Development
+ 2]MEAN Stack Development
+ 3]MERN Stack Development
+
+ duration:6 months
+	General questions about Course Details:
+
+ 		Q: What courses do you offer?
+  			A: We offer three main courses:
+    				Flutter Full Stack Development
+    				MEAN Stack Development
+    				MERN Stack Development
+
+ 		Q: How long are the courses? 
+  		A: All our courses have a duration of 6 months.
+		
+		Q: Which topics will I learn?
+		A: Depending on your chosen course:
+			Flutter Full Stack: flutter, dart, firebase
+			MEAN Stack: Angular, Nodejs, MongoDB, Express.js, JavaScript, Typescript,HTML
+			MERN Stack: React ,Nodejs, MongoDB, Express.js, JavaScript, Typescript, HTML
+
+		Q: Do you provide any software or development tools? 
+		A: We'll guide you on installing free development tools and software. Most tools we use are open-source and free.
+
+
+ 		Q: Do I get a certificate after completion? 
+  		A: Yes, you will earn a Professional Certification that helps advance your career prospects.
+
+ 		Q: What does the curriculum include? 
+  		A: Our industry-ready curriculum is designed by experts to prepare you for today's competitive job market, including hands-on projects, workshops, and 			communication skills development
+
+		Q: What salary range can I expect after completing the course? 
+		A: Salary depends on various factors like skills, company, and location. We'll provide realistic expectations based on current market trends.
+
+		Q: Do you provide guidance on freelancing opportunities? 
+		A: Yes, we can guide you on freelancing platforms and building a freelance career in web development.
+
+		Q: Can I start my own tech startup after this course? 
+		A: The course provides strong technical foundation. We can guide you on entrepreneurship aspects as well.
+
+		Q: Do you help with building a professional LinkedIn profile? 
+		A: Yes, our profile-building workshops include LinkedIn optimization and professional online presence.
+
+		Q: What career paths are available after each course? 
+		A: Multiple paths including Full Stack Developer, Frontend Developer, Backend Developer, Mobile App Developer, and Technical Lead roles.
+
+location:
+
+	google map live location: https://maps.app.goo.gl/FZU98uTyon6x9dgC9
+	
+	Third Floor, Krishna Arcade , Opp. Metro Cardiac Hospital, Near Hi-Lite City
+ 	Thondayad Bypass, Calicut, Kerala - 673014,
+
+	
+	7km from Kozhikode new bus stand 
+
+	(local bus available from Calicut town to Hi-lite city/Metro Cardiac Hospital)
+
+	7km from ksrtc bus terminal 
+
+	(local bus available from Calicut town to Hi-lite city/Metro Cardiac Hospital)
+
+	8km from Kozhikode railway station
+
+	(local bus available from railway station to Hi-lite/Metro Cardiac Hospital)
+
+	9km from ramanattukara bus stand
+	
+	(local bus available from ramanattukara bus stand to Hi-lite/Metro Cardiac Hospital))
+
+	13km from feroke railway station
+
+	(local bus available from ramanattukara to Hi-lite/Metro Cardiac Hospital)
+
+	nearest bus stop
+
+	metro cardiac international cardiac center (opposite levelx)
+
+	Hi-lite mall Calicut (6 minutes walk to levelx)
+
+		General questions about Location & Schedule:
+	
+				Q: Where is Level X located? 
+				A: We are located at Third Floor, Krishna Arcade, Opp. Metro Cardiac Hospital, Near Hi-Lite City, Thondayad Bypass, Calicut, Kerala - 673014.
+				   location:https://maps.app.goo.gl/FZU98uTyon6x9dgC9
+
+				Q: How can I reach Level X? 
+				A: We are easily accessible:
+
+					7km from Kozhikode new bus stand
+					7km from KSRTC bus terminal
+					8km from Kozhikode railway station
+					9km from Ramanattukara bus stand
+					13km from Feroke railway station
+					Nearest bus stops: Metro Cardiac Hospital (opposite Level X) and Hi-lite Mall (6 minutes walk)
+					location:https://maps.app.goo.gl/FZU98uTyon6x9dgC9
+
+
+working hours:
+
+	Monday to Saturday (except second Saturday)
+	9:30 AM to 6:30 PM
+	lunch break: 1PM to 2PM
+			General questions about schedule:
+				
+				Q: What are your working hours? 
+				A: Monday to Saturday (except second Saturday), 9:30 AM to 6:30 PM, with lunch break from 1 PM to 2 PM.
+
+				Q: Are classes held on campus? 
+				A: Yes, we conduct in-campus classes for better learning experience and interaction.
+
+Placement:
+
+ LevelX gives 100% placement assistance
+ more than 75% of our students gets placed in top companies compared to other institutions
+
+			General questions about Placement & Career Support:
+
+				Q: Do you guarantee job placement? 
+				A: We provide 100% placement assistance after course completion. More than 75% of our students get placed in top companies compared to other institutions.
+
+				Q: What kind of career support do you provide? 
+				A: We offer comprehensive career support including placement assistance, live profile-building workshops, and lifetime community support.
+
+				Q: Do you help with resume building? 
+				A: Yes, we conduct live profile-building workshops to help you create a strong professional profile.
+				
+				Q: How long does placement assistance last? 
+				A: We provide placement assistance until you get placed, with no time limit on our support.
+				
+				Q: Do you help with interview preparation? 
+				A: Yes, we provide comprehensive interview preparation including technical interviews, HR rounds, and mock interviews.
+				
+				Q: Can I access course materials after completion? 
+				A: Yes, you'll have access to learning materials and resources even after course completion.
+				
+				Q: Do you provide alumni networking opportunities? 
+				A: Yes, our lifetime community support includes alumni networking and career growth opportunities.
+				
+				Q: What if I don't get placed immediately after the course? 
+				A: We continue providing placement assistance and additional support until you secure a suitable position.
+				
+				Q: Do you offer any advanced courses for further learning? 
+				A: We can guide you on advanced learning paths and may offer specialized workshops for alumini
+
+				Q: What kind of companies do your students get placed in? 
+				A: Our students get placed in various companies ranging from startups to established IT companies and MNCs.
+
+				Q: Are the industry projects real client projects? 
+				A: Yes, we work on real industry projects that give you authentic work experience and portfolio pieces.
+
+				Q: Do you have tie-ups with companies for placements? 
+				A: Yes, we have partnerships with various companies in the IT industry for placement opportunities.
+
+				Q: Will I get to work in a team during projects? 
+				A: Yes, collaborative learning includes team projects that simulate real workplace environments.
+				
+				Q: Do industry experts visit for guest lectures? 
+				A: Yes, we regularly invite industry professionals for guest sessions and workshops.
+
+
+fees: 
+we provide better scholarship compared to other institutions
+			
+			General questions about fees and scholarships:
+			
+				Q: What are the course fees? 
+				A: We provide better scholarship opportunities compared to other institutions. Please contact us for specific fee details and available scholarships.
+			
+				Q: Do you offer any scholarships or financial assistance? 
+				A: Yes, we provide better scholarship options compared to other institutions to make quality education accessible.
+
+contact: 
+
+office location :https://maps.app.goo.gl/FZU98uTyon6x9dgC9
+contact number: +91 8714 78 4411
+mail: hello@levelx.in
+website: www.levelx.in
+Instagram: https://www.instagram.com/levelxacademy/
+linkedin: https://www.linkedin.com/company/levelxlearn/
+
+			frequently asked questions for contact and admission :
+
+ 				Q: How can I get more information or enroll? 
+				A: You can visit us at our location or check our Google Maps location: https://maps.app.goo.gl/FZU98uTyon6x9dgC9 or connect us though:
+
+					contact number: +91 8714 78 4411
+					mail: hello@levelx.in
+					website: www.levelx.in
+					Instagram: https://www.instagram.com/levelxacademy/
+					linkedin: https://www.linkedin.com/company/levelxlearn/					
+
+				Q:When can I start the course? 
+				A: Please contact us thorough:
+
+					contact number: +91 8714 78 4411
+					mail: hello@levelx.in
+					website: www.levelx.in
+					Instagram: https://www.instagram.com/levelxacademy/
+					linkedin: https://www.linkedin.com/company/levelxlearn/
+
+				 for information about upcoming batch schedules and admission procedures.
+
+Special Circumstances:
+
+	Q: Do you offer weekend or evening batches? 
+	A: Our standard schedule is Monday-Saturday, 9:30 AM-6:30 PM. Please inquire about alternative timing options.
+
+	Q: Can working professionals join the course? 
+	A: Yes, though the intensive nature of the course requires significant time commitment. We can discuss flexible options.
+	
+	Q: Do you offer online classes? 
+	A: We focus on in-campus classes for better interaction, but please inquire about any online support options.
+
+	Q: Is there any age limit for enrollment? 
+	A: There's no strict age limit. We welcome learners who are serious about building a career in technology.
+
+	Q: Do you accept students from other states? 
+	A: Yes, we welcome students from all states. We can provide guidance on local accommodation options.
+
+practical concerns:
+
+	Q: Is there parking available at the institute? 
+	A: Please contact us for specific parking arrangements and availability.
+
+	Q: Do you provide lunch or cafeteria facilities? 
+	A: Please inquire about food arrangements and nearby dining options during your visit.
+
+	Q: What happens if I need to discontinue the course midway? 
+	A: We have policies for course discontinuation. Please discuss with our academic team for specific guidance.
+	
+	Q: Can I pay the fees in installments? 
+	A: Yes, we offer flexible payment options. Please discuss installment plans with our admissions team.
+	
+	Q: Do you offer any demo classes before enrollment? 
+	A: Yes, we can arrange demo sessions to help you understand our teaching methodology and course content.
+
+	Q: What is the student-to-teacher ratio? 
+	A: We maintain optimal ratios to ensure personalized attention and effective doubt resolution.
+
+	Q: Are there any additional costs beyond course fees? 
+	A: Course fees are comprehensive, but there might be minimal costs for workspace
+
+technical requirements:
+
+	Q: Do I need any prior programming experience to join? 
+	A: No, our courses are designed for learners of all backgrounds, including complete beginners with no programming experience.
+
+	Q: What computer specifications do I need for the course? 
+	A: We recommend a laptop/desktop with at least 8GB RAM, modern processor. Specific requirements will be shared upon enrollment.
+
+	Q: Do I need to bring my own laptop for classes? 
+	A: Yes, you'll need to bring your own laptop for hands-on coding practice during classes.
+ 

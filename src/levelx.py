@@ -6,15 +6,8 @@ import requests
 from datetime import datetime
 from enum import Enum
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
-from pinecone import Pinecone as PineconeClient, ServerlessSpec
-from langchain_community.document_loaders import TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_pinecone import PineconeVectorStore
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from google_sheets_manager import GoogleSheetsManager
 
@@ -105,8 +98,8 @@ SURVEY_CONFIG = {
                     "malayalam": "താങ്കൾക്ക് ഏറ്റവും താൽപര്യമുള്ള/Area ഏതാണ്?)"
                 },
                 "options": {
-                    "english": ["Full Stack Flutter", "Full Stack React", "Digital Marketing", "Data Science", "Not sure"],
-                    "malayalam": ["Full Stack Flutter", "Full Stack React", "Digital Marketing", "Data Science", "Not sure (ഉറപ്പില്ല / തീർച്ചയല്ല)"]
+                    "english": ["Flutter full stack", "Full Stack React", "Digital Marketing", "Data Science", "Not sure"],
+                    "malayalam": ["flutter Full Stack ", "Full Stack React", "MEAN Stack development", "MERN Stack development", "Not sure (ഉറപ്പില്ല / തീർച്ചയല്ല)"]
                 },
                 "context": "This helps us recommend the best learning path for you.",
                 "response_format": "Full Stack Flutter, Full Stack React, Digital Marketing, Data Science, or Not sure"
@@ -150,11 +143,11 @@ SURVEY_CONFIG = {
         },
         "name_request": {
             "english": "Now, to connect you with our team and send your personalized recommendations, could you please share your full name?",
-            "malayalam": "ഇപ്പോൾ, ഞങ്ങളുടെ ടീമുമായി നിങ്ങളെ ബന്ധിപ്പിക്കാനും നിങ്ങളുടെ വ്യക്തിഗത ശുപാർശകൾ അയയ്ക്കാനും, നിങ്ങളുടെ പൂർണ്ണ നാമം പങ്കുവെയ്ക്കാമോ?"
+            "malayalam": "ഇപ്പോൾ, ഞങ്ങളുടെ ടീമുമായി നിങ്ങളെ ബന്ധിപ്പിക്കാനും നിങ്ങളുടെ വ്യക്തിഗത ശുപാർശകൾ അയയ്ക്കാനും, നിങ്ങളുടെ പൂർണ്ണ നാമം പങ്കുവെയ്ക്കാമോ? (TYPE ONLY IN ENGLISH)"
         },
         "no_problem": {
             "english": "No problem! Could you please share your full name to connect you with our team?",
-            "malayalam": "പ്രശ്നമില്ല! ഞങ്ങളുടെ ടീമുമായി നിങ്ങളെ ബന്ധിപ്പിക്കാൻ നിങ്ങളുടെ പൂർണ്ണ നാമം പങ്കുവെയ്ക്കാമോ?"
+            "malayalam": "പ്രശ്നമില്ല! ഞങ്ങളുടെ ടീമുമായി നിങ്ങളെ ബന്ധിപ്പിക്കാൻ നിങ്ങളുടെ പൂർണ്ണ നാമം പങ്കുവെയ്ക്കാമോ? (TYPE ONLY IN ENGLISH)"
         },
         "didnt_catch": {
             "english": "I didn't catch that. Would you like the personalized experience? Please answer with 'yes' or 'no'.",
@@ -169,21 +162,18 @@ SURVEY_CONFIG = {
 
 class ChatBot:
     """
-    A chatbot class that uses a Retrieval-Augmented Generation (RAG) pipeline
-    with conversational memory and personalized survey.
+    A chatbot class that uses system prompts with levelx.txt content
+    instead of RAG pipeline, with conversational memory and personalized survey.
     """
     def __init__(self):
         """Initializes the chatbot and all its components."""
         # --- 1. Load Environment Variables ---
         load_dotenv()
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
-        self.pinecone_api_key = os.getenv('PINECONE_API_KEY')
-        self.pinecone_env = os.getenv('PINECONE_ENVIORNMENT')
-
         self.google_api_key = os.getenv('GOOGLE_API_KEY')
 
-        if not all([self.openai_api_key, self.pinecone_api_key]):
-            raise ValueError("OpenAI and Pinecone API keys are missing from .env file.")
+        if not self.openai_api_key:
+            raise ValueError("OpenAI API key is missing from .env file.")
         
         self._initialize_google_sheets()
 
@@ -195,18 +185,23 @@ class ChatBot:
         self.language_selected = False  # Add this flag
 
         # --- 3. Initialize LangChain Components ---
-        self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=self.openai_api_key)
         self.llm = ChatOpenAI(
-            model="gpt-5-nano",  # Fixed model name
+            model="gpt-4o-mini",
             openai_api_key=self.openai_api_key,
-            temperature=1,
+            temperature=0.3,
         )
         
-        # 4. --Setup Vector Store and RAG Chain---
-        docsearch = self._initialize_pinecone()
-        self.rag_chain = self._create_rag_chain(docsearch)
+        # --- 4. Load LevelX Content and Create System Prompt ---
+        self._load_levelx_content()
+        self._create_system_prompt_template()
         
-        print("✅ LEVELX AI Assistant with Personalized Survey is ready!")
+        # --- 5. Initialize Memory ---
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True
+        )
+        
+        print("LEVELX AI Assistant (System Prompt Mode) is ready!")
 
     def _initialize_google_sheets(self):
         """Initializes the Google Sheets manager if credentials are present."""
@@ -214,12 +209,10 @@ class ChatBot:
             logger.info("🔄 Initializing Google Sheets connection...")
             self.sheets_manager = GoogleSheetsManager()
             
-            # Test connection and setup headers
+            # Test connection only
             success, message = self.sheets_manager.test_connection()
             if success:
                 logger.info(f"✅ Google Sheets initialized: {message}")
-                # Setup headers if needed
-                self.sheets_manager.setup_sheet_headers()
             else:
                 logger.warning(f"⚠️ Google Sheets connection issue: {message}")
                 
@@ -227,121 +220,106 @@ class ChatBot:
             logger.error(f"❌ Failed to initialize Google Sheets manager: {e}")
             self.sheets_manager = None
 
-    def _initialize_pinecone(self):
-        """Connects to Pinecone and sets up the vector index."""
-        self.index_name = "levelxbot"
+    def _load_levelx_content(self):
+        """Load the entire levelx.txt content"""
+        file_path = './src/materials/levelx.txt'
         try:
-            pc = PineconeClient(api_key=self.pinecone_api_key)
-            if self.index_name not in pc.list_indexes().names():
-                pc.create_index(
-                    name=self.index_name, dimension=1536, metric="cosine",
-                    spec=ServerlessSpec(cloud="aws", region="us-east-1")
-                )
-                self._populate_pinecone_index()
-            
-            return PineconeVectorStore.from_existing_index(self.index_name, self.embeddings)
-        except Exception as e:
-            logger.error(f"Error initializing Pinecone: {e}")
-            raise
+            with open(file_path, 'r', encoding='utf-8') as file:
+                self.levelx_content = file.read()
+                logger.info(f"✅ Loaded LevelX content from {file_path}")
+        except FileNotFoundError:
+            self.levelx_content = "No course information available."
+            logger.warning(f"⚠️ Could not find {file_path}")
 
-    def _populate_pinecone_index(self):
-        """Loads data from a file and embeds it into the Pinecone index."""
-        print("Index is empty. Loading and embedding documents...")
-        file_path = './materials/levelx.txt'
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Document file not found: {file_path}")
-        
-        loader = TextLoader(file_path)
-        documents = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        docs = text_splitter.split_documents(documents)
-        
-        print(f"Splitting document into {len(docs)} chunks.")
-        PineconeVectorStore.from_documents(docs, self.embeddings, index_name=self.index_name)
-        print(f"✅ Documents successfully added to index.")
-
-    def _create_rag_chain(self, docsearch):
-        """Creates the ConversationalRetrievalChain with a custom prompt and memory."""
+    def _create_system_prompt_template(self):
+        """Creates the system prompt template using levelx.txt content"""
         template = """
-You are the LevelX AI Assistant. Use ONLY the following Retrieved Context to answer questions.
+You are the LevelX AI Assistant. Use the following COMPLETE COURSE INFORMATION to answer questions.
 ALWAYS respond in {language} language.
 
+COMPLETE LEVELX COURSE INFORMATION:
+{levelx_content}
+
 Rules:
-1. ONLY use information from the Retrieved Context
+1. Use ONLY the information provided in the COMPLETE LEVELX COURSE INFORMATION above
 2. If language is 'malayalam', respond ONLY in Malayalam, keeping only technical terms in English
 3. If language is 'english', respond in English
-4. If information is not in context, respond:
-   English: "I don't have specific information about that in my database."
-   Malayalam: "ഇതിനെക്കുറിച്ചുള്ള കൃത്യമായ വിവരങ്ങൾ എന്റെ ഡാറ്റാബേസിൽ ലഭ്യമല്ല."
+4. Keep responses concise and focused on the specific question asked
+5. For specific course queries (Flutter, MEAN, MERN), focus only on course details, curriculum, and benefits - do NOT include contact information or location unless specifically asked
+6. If information is not available in the course information, respond:
+   English: "I don't have specific information about that. I can help you with:
 
-Retrieved Context: {context}
+📚 COURSES - Learn about our courses
+🎯 ADMISSION - Admission process information  
+📋 PLACEMENT - Placement details
+💰 FEES - Fee structure
+📍 LOCATION - Our location details
+🔧 CONTACT - Contact information
+
+Just type any keyword or ask your question!"
+
+   Malayalam: "അതിനെക്കുറിച്ചുള്ള കൃത്യമായ വിവരങ്ങൾ എന്റെ പക്കൽ ഇല്ല. താഴെ കൊടുത്തിരിക്കുന്ന കാര്യങ്ങൾക്ക് ഞാൻ നിങ്ങളെ സഹായിക്കാം:
+
+📚 കോഴ്‌സുകൾ - ഞങ്ങളുടെ കോഴ്‌സുകളെക്കുറിച്ച് അറിയുക
+🎯 പ്രവേശനം - പ്രവേശന പ്രക്രിയയെക്കുറിച്ചുള്ള വിവരങ്ങൾ
+📋 പ്ലേസ്മെന്റ് - പ്ലേസ്മെന്റ് വിശദാംശങ്ങൾ
+💰 ഫീസ് - ഫീസ് ഘടന
+📍 ലൊക്കേഷൻ - ഞങ്ങളുടെ സ്ഥാന വിവരങ്ങൾ
+🔧 കോൺടാക്റ്റ് - ബന്ധപ്പെടാനുള്ള വിവരങ്ങൾ
+
+ഏതെങ്കിലും കീവേഡ് ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ നിങ്ങളുടെ ചോദ്യം ചോദിക്കുക!"
+
 Previous conversation: {chat_history}
 Current Question: {question}
 Response Language: {language}
 
-Provide a helpful response:"""
+Provide a helpful, concise response focused on the specific question asked:"""
 
-        memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True,
-            output_key="answer"
-        )
-
-        # Create the prompt template with language parameter
-        prompt = PromptTemplate(
+        self.system_prompt_template = PromptTemplate(
             template=template,
-            input_variables=["context", "question", "chat_history", "language"]
+            input_variables=["levelx_content", "question", "chat_history", "language"]
         )
 
-        chain = ConversationalRetrievalChain.from_llm(
-            llm=self.llm,
-            retriever=docsearch.as_retriever(search_kwargs={"k": 3}),
-            memory=memory,
-            combine_docs_chain_kwargs={"prompt": prompt},
-            return_source_documents=True
-        )
-        
-        # Store the prompt template as an instance variable
-        self.rag_prompt_template = prompt
-        return chain
-    
-    def _invoke_rag_chain_with_language(self, question: str, language: str):
-        """Custom method to invoke RAG chain with language parameter"""
+    def _invoke_system_prompt_chain(self, question: str, language: str):
+        """Process question using system prompt approach"""
         try:
-            # Get the retriever and memory from the existing chain
-            retriever = self.rag_chain.retriever
-            memory = self.rag_chain.memory
-            
-            # Get relevant documents
-            docs = retriever.get_relevant_documents(question)
-            context = "\n\n".join([doc.page_content for doc in docs])
-            
-            # Get chat history
-            chat_history = ""
-            if hasattr(memory, 'chat_memory') and memory.chat_memory.messages:
-                chat_history = "\n".join([f"{msg.type}: {msg.content}" for msg in memory.chat_memory.messages[-6:]])
-            
-            # Use the prompt template directly
-            prompt = self.rag_prompt_template
-            formatted_prompt = prompt.format(
-                context=context,
-                question=question,
-                chat_history=chat_history,
-                language=language
-            )
+            # Check if we're in personalized mode
+            if (self.lead_status == LeadStatus.PERSONALIZED_MODE and 
+                self.current_lead.name and 
+                any(self.current_lead.survey_answers.values())):
+                # Use personalized system prompt
+                formatted_prompt = self._create_personalized_system_prompt(question, language)
+            else:
+                # Use regular system prompt
+                chat_history = ""
+                if self.memory.chat_memory.messages:
+                    chat_history = "\n".join([f"{msg.type}: {msg.content}" for msg in self.memory.chat_memory.messages[-6:]])
+                
+                formatted_prompt = self.system_prompt_template.format(
+                    levelx_content=self.levelx_content,
+                    question=question,
+                    chat_history=chat_history,
+                    language=language
+                )
             
             # Get response from LLM
             response = self.llm.invoke(formatted_prompt).content
             
             # Update memory
-            memory.chat_memory.add_user_message(question)
-            memory.chat_memory.add_ai_message(response)
+            self.memory.chat_memory.add_user_message(question)
+            self.memory.chat_memory.add_ai_message(response)
             
-            return {"answer": response, "source_documents": docs}
+            return response
             
         except Exception as e:
-            logger.error(f"Error in custom RAG chain invocation: {e}")
-            return {"answer": "I apologize, but I encountered an error processing your request.", "source_documents": []}
+            logger.error(f"Error in system prompt chain invocation: {e}")
+            return "I apologize, but I encountered an error processing your request."
+
+    def reload_content(self):
+        """Reload levelx.txt content for updates"""
+        self._load_levelx_content()
+        logger.info("🔄 LevelX content reloaded")
+    
     
     # --- Data Extraction Helpers ---
 
@@ -425,9 +403,9 @@ Provide a helpful response:"""
     def _generate_personalized_recommendations(self) -> str:
         """Generate personalized course recommendations based on survey responses and Pinecone data, with new survey logic and special handling for 'Other' and 'Not sure'"""
         try:
-            # First get relevant course information from Pinecone
+            # First get relevant course information from system prompt
             course_query = "What courses does LevelX offer?"
-            course_result = self._invoke_rag_chain_with_language(course_query, self.preferred_language or 'english')
+            course_result = self._invoke_system_prompt_chain(course_query, self.preferred_language or 'english')
 
             # Prepare user profile fields with new survey meanings
             background = self.current_lead.survey_answers.get('q1', 'Not specified')
@@ -441,8 +419,15 @@ Provide a helpful response:"""
             if isinstance(interest_area, str) and (interest_area.lower().startswith('not sure') or 'ഉറപ്പില്ല' in interest_area or 'തീർച്ചയല്ല' in interest_area):
                 interest_area = "User is not sure about their area of interest. Please suggest suitable options."
 
-            # Use the retrieved course information for recommendations
+            # Language handling for recommendation generation
+            language = self.preferred_language or 'english'
+
+            # Use the retrieved course information for recommendations with strict language rules
             recommendation_prompt = f"""
+You are LevelX's assistant. ALWAYS respond in {language} language.
+If language is 'malayalam', write the full answer in Malayalam and keep only unavoidable technical terms/course names in English.
+If language is 'english', write the full answer in English.
+
 Based on the following user profile and ONLY the retrieved course information below, provide personalized recommendations:
 
 USER PROFILE:
@@ -453,15 +438,16 @@ USER PROFILE:
 - Area of Interest: {interest_area}
 
 RETRIEVED COURSE INFORMATION:
-{course_result.get('answer', '')}
+{course_result}
 
 RULES:
 1. ONLY recommend courses that are explicitly mentioned in the Retrieved Course Information
 2. DO NOT invent or assume course details
 3. If no suitable courses are found in the context, acknowledge this and suggest talking to an advisor
 4. Keep technical terms and course names exactly as they appear in the context
+5. Do not mix languages in the output; follow {language} strictly
 
-Provide a personalized response focusing on actual LevelX courses that match their profile."""
+Provide a concise, helpful personalized response focusing on actual LevelX courses that match their profile."""
             response = self.llm.invoke(recommendation_prompt).content.strip()
 
             # Format the final response based on language
@@ -475,68 +461,70 @@ Provide a personalized response focusing on actual LevelX courses that match the
                 )
             else:
                 return (
-                    f"Based on your profile and our available courses, here are my recommendations:\n\n"
+                    f"Based on your profile and available courses, here are my recommendations:\n\n"
                     f"{response}\n\n"
-                    f"These recommendations are based on actual LevelX courses that align with your background "
-                    f"({background}) and your area of interest ({interest_area})."
+                    f"These recommendations are based on actual LevelX courses that match your background as "
+                    f"{background} and your interest in {interest_area}."
                 )
         except Exception as e:
             logger.error(f"Error generating personalized recommendations: {e}")
             if self.preferred_language == 'malayalam':
-                return ("ക്ഷമിക്കണം, വ്യക്തിഗത ശുപാർശകൾ സൃഷ്ടിക്കുന്നതിൽ ഒരു പ്രശ്നം നേരിട്ടു. "
-                        "ഞങ്ങളുടെ കോഴ്‌സുകളെക്കുറിച്ച് നിങ്ങൾക്ക് ചോദ്യങ്ങൾ ഉണ്ടെങ്കിൽ ചോദിക്കാം, ഞാൻ സഹായിക്കാം.")
+                return "ക്ഷമിക്കണം, വ്യക്തിഗത ശുപാർശകൾ സൃഷ്ടിക്കുന്നതിൽ പിശക് സംഭവിച്ചു."
             else:
-                return ("I apologize, but I encountered an issue generating personalized recommendations. "
-                        "Please ask me specific questions about our courses and I'll help guide you.")
+                return "Sorry, there was an error generating personalized recommendations."
 
-    def _create_personalized_prompt_template(self):
-        """Creates a personalized RAG chain prompt based on user's survey data (new survey logic)"""
+    def _create_personalized_system_prompt(self, question: str, language: str):
+        """Creates a personalized system prompt based on user's survey data"""
         background = self.current_lead.survey_answers.get('q1', 'Not specified')
         tech_background = self.current_lead.survey_answers.get('q2', 'Not specified')
         motivation = self.current_lead.survey_answers.get('q3', 'Not specified')
         interest_area = self.current_lead.survey_answers.get('q4', 'Not specified')
+        
         # Special handling for 'Other' and 'Not sure'
         if isinstance(background, str) and background.lower() == 'other':
             background = "(User specified 'Other' as background)"
         if isinstance(interest_area, str) and (interest_area.lower().startswith('not sure') or 'ഉറപ്പില്ല' in interest_area or 'തീർച്ചയല്ല' in interest_area):
             interest_area = "User is not sure about their area of interest. Please suggest suitable options."
-        user_context = f"""
-PERSONALIZED CONTEXT FOR {self.current_lead.name.upper()}:
+        
+        # Get chat history
+        chat_history = ""
+        if self.memory.chat_memory.messages:
+            chat_history = "\n".join([f"{msg.type}: {msg.content}" for msg in self.memory.chat_memory.messages[-6:]])
+        
+        personalized_template = f"""
+You are the LevelX AI Assistant in PERSONALIZED MODE for {self.current_lead.name.upper()}.
+Use the following COMPLETE COURSE INFORMATION to provide personalized responses.
+ALWAYS respond in {language} language.
+
+COMPLETE LEVELX COURSE INFORMATION:
+{self.levelx_content}
+
+PERSONALIZED USER PROFILE:
 Name: {self.current_lead.name}
 Background: {background}
 Tech Background: {tech_background}
 Motivation to Learn Tech: {motivation}
 Area of Interest: {interest_area}
 
-RESPONSE REQUIREMENTS:
-1. Use ONLY the information from the Retrieved Context below
-2. If information isn't in the context, say: "I don't have specific information about that in our course database"
-3. Keep responses focused on LevelX's actual courses and offerings
-4. Relate answers to {self.current_lead.name}'s background and goals
-5. Match course recommendations to their area of interest: {interest_area}
+PERSONALIZED RESPONSE REQUIREMENTS:
+1. Use ONLY the information from the COMPLETE LEVELX COURSE INFORMATION above
+2. Address the user as: {self.current_lead.name}
+3. Reference their background ({background}) when relevant
+4. Align recommendations with their motivation: {motivation}
+5. Focus on their area of interest: {interest_area}
+6. If language is 'malayalam', respond ONLY in Malayalam, keeping only technical terms in English
+7. If language is 'english', respond in English
+8. If information is not available, respond:
+   English: "I don't have specific information about that, {self.current_lead.name}. Based on your interest in {interest_area}, I can help you with our available courses."
+   Malayalam: "{self.current_lead.name}, അതിനെക്കുറിച്ച് എനിക്ക് വിവരങ്ങൾ ഇല്ല. {interest_area} എന്ന നിങ്ങളുടെ താൽപര്യം അടിസ്ഥാനമാക്കി, ഞങ്ങളുടെ ലഭ്യമായ കോഴ്സുകളെക്കുറിച്ച് സഹായിക്കാം."
 
-INTERACTION GUIDELINES:
-1. Address as: {self.current_lead.name}
-2. Reference their background: {background}
-3. Align with their motivation: {motivation}
-4. Match their area of interest: {interest_area}
+Previous conversation: {chat_history}
+Current Question: {question}
+Response Language: {language}
 
-CONTEXT USAGE RULES:
-- ONLY use information present in the Retrieved Context
-- DO NOT make assumptions about course details not mentioned
-- DO NOT invent features or benefits
-- If unsure, acknowledge limitations of available information
-- ALWAYS respond in {{language}} language
-- If language is 'malayalam', respond ONLY in Malayalam, keeping only technical terms in English
-- If language is 'english', respond in English
-
-Retrieved Context: {{context}}
-Previous Discussion: {{chat_history}}
-Current Question: {{question}}
-Response Language: {{language}}
-
-Based strictly on the above context, provide a personalized response for {self.current_lead.name}:"""
-        return user_context
+Provide a personalized response for {self.current_lead.name} based on their profile and the LevelX course information:"""
+        
+        return personalized_template
 
     # --- Core State Machine ---
 
@@ -546,25 +534,29 @@ Based strictly on the above context, provide a personalized response for {self.c
         # Course lists for both languages
         course_list_en = [
             "• Flutter Full Stack Development",
-            "• React Full Stack Development", 
-            "• Digital Marketing Mastery",
-            "• Data Analytics and Visualization"
+            "• MERN Stack Development", 
+            "• MEAN Stack Development"
         ]
         course_list_ml = [
             "• ഫ്ലട്ടർ ഫുൾ സ്റ്റാക്ക് ഡെവലപ്പ്മെന്റ്",
-            "• റിയാക്ട് ഫുൾ സ്റ്റാക്ക് ഡെവലപ്പ്മെന്റ്",
-            "• ഡിജിറ്റൽ മാർക്കറ്റിംഗ് മാസ്റ്ററി",
-            "• ഡാറ്റാ അനലിറ്റിക്സ് ആൻഡ് വിഷ്വലൈസേഷൻ"
+            "• മെയാൻ സ്റ്റാക്ക് ഡെവലപ്പ്മെന്റ്",
+            "• മെൻ സ്റ്റാക്ക് ഡെവലപ്പ്മെന്റ്"
         ]
         
         # Course keywords for detection
         course_keywords_en = ["course", "courses", "program", "programs", "learning path", "what do you offer", "available courses"]
-        course_keywords_ml = ["കോഴ്സ്", "കോഴ്സുകൾ", "പഠനം", "പാഠ്യക്രമം", "പാഠ്യക്രമങ്ങൾ"]
+        course_keywords_ml = ["കോഴ്സ്", "കോഴ്സുകൾ", "പഠനം", "പാഠ്യക്രമം", "പാഠ്യക്രമങ്ങൾ","course", "courses", "program", "programs", "learning path", "what do you offer", "available courses"]
         specific_courses_en = ["flutter", "react", "digital marketing", "data analytics", "data analysis", "visualization"]
         specific_courses_ml = ["ഫ്ലട്ടർ", "റിയാക്ട്", "ഡിജിറ്റൽ മാർക്കറ്റിംഗ്", "ഡാറ്റാ അനലിറ്റിക്സ്"]
 
         # Only check for new intent if we're in NO_INTENT or LEAD_COMPLETE state
+        # But skip if user already provided email (completed full lead process)
         if self.lead_status in [LeadStatus.NO_INTENT, LeadStatus.LEAD_COMPLETE]:
+            # Check if user already completed the full lead process (has email)
+            if self.lead_status == LeadStatus.LEAD_COMPLETE and self.current_lead.email:
+                # User already completed survey and provided email, just answer the question
+                return self._invoke_system_prompt_chain(question, self.preferred_language or 'english')['answer']
+            
             if self._detect_intent(question):
                 logger.info(f"🎯 Intent detected: {question}")
                 self.current_lead.intent_message = question
@@ -579,24 +571,23 @@ Based strictly on the above context, provide a personalized response for {self.c
                     if is_general_course_query:
                         content_answer = "LevelX-ൽ ലഭ്യമായ കോഴ്സുകൾ:\n\n" + "\n".join(course_list_ml)
                     else:
-                        # For specific course queries, use RAG
-                        rag_result = self._invoke_rag_chain_with_language(question, language)
-                        content_answer = rag_result.get('answer', "I can certainly help with that.")
+                        # For specific course queries, use system prompt
+                        result = self._invoke_system_prompt_chain(question, language)
+                        content_answer = result
                 else:
                     is_general_course_query = any(kw in question_lower for kw in course_keywords_en) and not any(specific in question_lower for specific in specific_courses_en)
                     if is_general_course_query:
                         content_answer = "Available courses at LevelX:\n\n" + "\n".join(course_list_en)
                     else:
-                        # For specific course queries, use RAG
-                        rag_result = self._invoke_rag_chain_with_language(question, language)
-                        content_answer = rag_result.get('answer', "I can certainly help with that.")
-                
-                # Offer personalized LevelX AI with language support
-                personalized_offer = SURVEY_CONFIG["system_prompt"]["exclusive_offer"][language]
+                        # For specific course queries, use system prompt
+                        result = self._invoke_system_prompt_chain(question, language)
+                        content_answer = result
                 
                 # Transition to offering personalized
                 self.lead_status = LeadStatus.OFFERING_PERSONALIZED
-                return f"{content_answer}{personalized_offer}"
+                
+                # Return content answer and signal for separate exclusive offer
+                return f"{content_answer}|SEND_EXCLUSIVE_OFFER|"
     
         # Handle other states without re-detecting intent
         if self.lead_status == LeadStatus.OFFERING_PERSONALIZED:
@@ -616,39 +607,28 @@ Based strictly on the above context, provide a personalized response for {self.c
 
         # Survey Question Handlers
         if self.lead_status == LeadStatus.SURVEY_Q1:
+            # Record answer and advance state; main.py will send the next poll
             self.current_lead.survey_answers["q1"] = question.strip()
             self.lead_status = LeadStatus.SURVEY_Q2
-            q2_config = self._get_survey_question("q2")
-            language = self.preferred_language or 'english'
-            thank_you = SURVEY_CONFIG["system_prompt"]["thank_you"][language]
-            question_2 = SURVEY_CONFIG["system_prompt"]["question_2"][language]
-            return f"{thank_you} \n\n{question_2}\n{q2_config['question'][language]}"
+            return None
 
         if self.lead_status == LeadStatus.SURVEY_Q2:
+            # Record answer and advance state; main.py will send the next poll
             self.current_lead.survey_answers["q2"] = question.strip()
             self.lead_status = LeadStatus.SURVEY_Q3
-            q3_config = self._get_survey_question("q3")
-            language = self.preferred_language or 'english'
-            great = SURVEY_CONFIG["system_prompt"]["great"][language]
-            question_3 = SURVEY_CONFIG["system_prompt"]["question_3"][language]
-            return f"{great} \n\n{question_3}\n{q3_config['question'][language]}"
+            return None
 
         if self.lead_status == LeadStatus.SURVEY_Q3:
+            # Record answer and advance state; main.py will send the next poll
             self.current_lead.survey_answers["q3"] = question.strip()
             self.lead_status = LeadStatus.SURVEY_Q4
-            q4_config = self._get_survey_question("q4")
-            language = self.preferred_language or 'english'
-            perfect = SURVEY_CONFIG["system_prompt"]["perfect"][language]
-            question_4 = SURVEY_CONFIG["system_prompt"]["question_4"][language]
-            return f"{perfect} \n\n{question_4}\n{q4_config['question'][language]}"
+            return None
 
         if self.lead_status == LeadStatus.SURVEY_Q4:
+            # Record final answer and move to name collection; main.py will handle completion messaging
             self.current_lead.survey_answers["q4"] = question.strip()
             self.lead_status = LeadStatus.COLLECTING_NAME
-            language = self.preferred_language or 'english'
-            completion_msg = SURVEY_CONFIG["system_prompt"]["completion_message"][language]
-            name_request = SURVEY_CONFIG["system_prompt"]["name_request"][language]
-            return f"{completion_msg}\n\n{name_request}"
+            return None
 
         # Contact Information Collection
         if self.lead_status == LeadStatus.COLLECTING_NAME:
@@ -663,7 +643,7 @@ Based strictly on the above context, provide a personalized response for {self.c
                     return f"Thank you, {name}! Finally, what's your email address?"
             else:
                 if language == 'malayalam':
-                    return "ക്ഷമിക്കണം, ഒരു സാധുവായ പേര് മനസ്സിലായില്ല. നിങ്ങളുടെ പൂർണ്ണ നാമം നൽകാമോ?"
+                    return "ക്ഷമിക്കണം, ഒരു സാധുവായ പേര് മനസ്സിലായില്ല. നിങ്ങളുടെ പൂർണ്ണ നാമം നൽകാമോ? (TYPE ONLY IN ENGLISH)"
                 else:
                     return "I'm sorry, I didn't catch a valid name. Could you please provide your full name?"
 
@@ -717,13 +697,13 @@ Based strictly on the above context, provide a personalized response for {self.c
                         return (
                             f"അതിശയിക്കാം, {self.current_lead.name}! നിങ്ങളുടെ വിവരങ്ങൾ സുരക്ഷിതമായി രേഖപ്പെടുത്തിയിരിക്കുന്നു.\n\n"
                             f"ഞങ്ങളുടെ ടീമിലെ ഒരു അംഗം 24 മണിക്കൂറിനുള്ളിൽ നിങ്ങളെ ബന്ധപ്പെടും. "
-                            f"LEVELX-ൽ നിങ്ങൾക്കുള്ള താൽപ്പര്യത്തിന് നന്ദി!"
+                            f"HOW CAN I HELP YOU MORE?"
                         )
                     else:
                         return (
                             f"Excellent, {self.current_lead.name}! I have securely logged your information.\n\n"
                             f"A member of our team will reach out to you within 24 hours. "
-                            f"Thank you for your interest in LEVELX!"
+                            f"how can i help you more?"
                         )
             else:
                 if language == 'malayalam':
@@ -734,33 +714,12 @@ Based strictly on the above context, provide a personalized response for {self.c
         return None
 
     def _update_to_personalized_mode(self):
-        """Updates the RAG chain to use personalized prompts"""
+        """Updates to personalized mode - now uses system prompt approach"""
         try:
-            # Create new personalized prompt template
-            personalized_template = self._create_personalized_prompt_template()
-            
-            # Update the chain's prompt
-            new_prompt = PromptTemplate(
-                template=personalized_template,
-                input_variables=["context", "question", "chat_history", "language"]
-            )
-            
-            # Recreate the chain with updated prompt and increased context retrieval
-            # Create a retriever with increased k value
-            retriever_with_more_docs = self.rag_chain.retriever.with_search_kwargs({"k": 5})
-            
-            self.rag_chain = ConversationalRetrievalChain.from_llm(
-                llm=self.llm,
-                retriever=retriever_with_more_docs,
-                memory=self.rag_chain.memory,
-                combine_docs_chain_kwargs={"prompt": new_prompt},
-                return_source_documents=True,
-                # Increase context retrieval for better personalization
-                max_tokens_limit=2000
-            )
-            
+            # In system prompt mode, we just update the status
+            # The personalized context is handled in the system prompt template
             logger.info(f"✅ Updated to personalized mode for {self.current_lead.name}")
-            
+
         except Exception as e:
             logger.error(f"Error updating to personalized mode: {e}")
 
@@ -858,14 +817,14 @@ Based strictly on the above context, provide a personalized response for {self.c
             except Exception as lead_error:
                 logger.error(f"Error in lead collection: {lead_error}")
         
-            # Process through RAG pipeline only if not in email collection state
-            logger.info(f"Processing question with RAG chain: {question}")
-            result = self._invoke_rag_chain_with_language(question, self.preferred_language or 'english')
-            response = result.get('answer', "I'm sorry, I encountered an issue. Please try again.")
+            # Process through system prompt only if not in email collection state
+            logger.info(f"Processing question with system prompt: {question}")
+            result = self._invoke_system_prompt_chain(question, self.preferred_language or 'english')
+            response = result
 
             # Fallback: If the user is asking about courses and the answer does not mention at least two course names, append the course list
             course_keywords_en = ["course", "courses", "program", "programs", "learning path"]
-            course_keywords_ml = ["കോഴ്‌സ്", "കോഴ്‌സുകൾ", "പഠനം", "പാഠ്യക്രമം", "പാഠ്യക്രമങ്ങൾ", "കോഴ്സ്", "കോഴ്സുകൾ", "ട്രെയിനിംഗ്", "പ്രോഗ്രാം", "പ്രോഗ്രാമുകൾ", "എന്താണ് പഠിപ്പിക്കുന്നത്", "എന്ത് കോഴ്സുകൾ"]
+            course_keywords_ml = ["കോഴ്‌സ്", "കോഴ്‌സുകൾ", "പഠനം", "പാഠ്യക്രമം", "പാഠ്യക്രമങ്ങൾ", "കോഴ്സ്", "കോഴ്സുകൾ", "ട്രെയിനിംഗ്", "പ്രോഗ്രാം", "പ്രോഗ്രാമുകൾ", "എന്താണ് പഠിപ്പിക്കുന്നത്", "എന്ത് കോഴ്സുകൾ","കോഴ്‌സുകളെക്കുറിച്ച്","കോഴ്‌സുകളെക്കുറിച്ച് അറിയണം"]
             course_list_en = [
                 "Full Stack Development",
                 "Flutter Development",
@@ -893,23 +852,44 @@ Based strictly on the above context, provide a personalized response for {self.c
             found_courses = [c for c in course_names if c in response]
             logger.info(f"🔍 Found courses in response: {found_courses} (need at least 2)")
             
-            if is_course_query and len(found_courses) < 2:
-                logger.info(f"✅ Replacing generic response with course list (language: {self.preferred_language})")
-                if self.preferred_language == 'malayalam':
-                    response = "LevelX-ൽ ലഭ്യമായ പ്രധാന കോഴ്‌സുകൾ:\n" + "\n".join(course_list_ml)
-                else:
-                    response = "Main courses available at LevelX:\n" + "\n".join(course_list_en)
-            else:
-                logger.info(f"❌ Not replacing response: is_course_query={is_course_query}, found_courses_count={len(found_courses)}")
+            # Removed course list replacement logic - keep original response
+            logger.info(f"❌ Course list replacement disabled: is_course_query={is_course_query}, found_courses_count={len(found_courses)}")
 
-            if self.preferred_language == 'malayalam' and "I don't have specific information" in response:
-                response = "ഇതിനെക്കുറിച്ചുള്ള കൃത്യമായ വിവരങ്ങൾ എന്റെ ഡാറ്റാബേസിൽ ലഭ്യമല്ല."
+            # Check for fallback responses and replace with help menu
+            if ("I don't have specific information" in response or 
+                "I don't have specific information about that in our course database" in response):
+                if self.preferred_language == 'malayalam':
+                    response = """എനിക്ക് നിങ്ങളെ എങ്ങനെ സഹായിക്കാം? ദയവായി ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കൂ:
+
+📚 കോഴ്‌സുകൾ - ഞങ്ങളുടെ കോഴ്‌സുകളെക്കുറിച്ച് അറിയുക
+🎯 പ്രവേശനം - പ്രവേശന പ്രക്രിയയെക്കുറിച്ചുള്ള വിവരങ്ങൾ
+📋 പ്ലേസ്മെന്റ് - പ്ലേസ്മെന്റ് വിശദാംശങ്ങൾ
+💰 ഫീസ് - ഫീസ് ഘടന
+📍 ലൊക്കേഷൻ - ഞങ്ങളുടെ സ്ഥാന വിവരങ്ങൾ
+🔧 കോൺടാക്റ്റ് - ബന്ധപ്പെടാനുള്ള വിവരങ്ങൾ
+
+ഏതെങ്കിലും കീവേഡ് ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ നിങ്ങളുടെ ചോദ്യം ചോദിക്കുക!"""
+                else:
+                    response = """oops,I don't have specific information about that in our course but i can help you with:
+
+📚 COURSES - Learn about our courses
+🎯 ADMISSION - Admission process information  
+📋 PLACEMENT - Placement details
+💰 FEES - Fee structure
+📍 LOCATION - Our location details
+🔧 CONTACT - Contact information
+
+Just type any keyword or ask your question!"""
 
             return response
             
         except Exception as e:
             logger.error(f"Critical error in ask method: {e}")
             return "I apologize, but I've encountered an unexpected error. Please try again later."
+
+    async def ask_async(self, question: str) -> str:
+        """Async version of ask method for FastAPI compatibility"""
+        return self.ask(question)
 
     def get_lead_status(self):
         """Returns the current lead collection status for debugging."""
@@ -935,8 +915,8 @@ Based strictly on the above context, provide a personalized response for {self.c
         """Reset the chatbot state to initial state"""
         self.lead_status = LeadStatus.NO_INTENT
         self.current_lead = LeadData()
-        if hasattr(self.rag_chain, 'memory') and hasattr(self.rag_chain.memory, 'chat_memory'):
-            self.rag_chain.memory.chat_memory.clear()
+        if hasattr(self, 'memory') and hasattr(self.memory, 'chat_memory'):
+            self.memory.chat_memory.clear()
         logger.info("🔄 ChatBot state reset to initial state")
     
     def save_user_to_sheets(self, name, phone_number):
@@ -1054,12 +1034,12 @@ Based strictly on the above context, provide a personalized response for {self.c
             if any(word in interest for word in ['full stack flutter', 'full stack react']):
                 score += 25
                 factors.append("High-demand tech skill interest (+25)")
-            elif 'digital marketing' in interest:
+            elif 'MEARN Stack Development' in interest:
                 score += 20
-                factors.append("Digital marketing interest (+20)")
-            elif 'data science' in interest:
+                factors.append("MEARN Stack Development interest (+20)")
+            elif 'MEAN Stack Development' in interest:
                 score += 25
-                factors.append("Data science interest (+25)")
+                factors.append("MEAN Stack Development interest (+25)")
             elif any(word in interest for word in ['not sure', 'ഉറപ്പില്ല', 'തീർച്ചയല്ല']):
                 score += 5
                 factors.append("Exploring options (+5)")
@@ -1092,8 +1072,8 @@ Based strictly on the above context, provide a personalized response for {self.c
             user_message_count = 0
             bot_message_count = 0
             
-            if hasattr(self.rag_chain, 'memory') and hasattr(self.rag_chain.memory, 'chat_memory'):
-                messages = self.rag_chain.memory.chat_memory.messages
+            if hasattr(self, 'memory') and hasattr(self.memory, 'chat_memory'):
+                messages = self.memory.chat_memory.messages
                 for message in messages:
                     if hasattr(message, 'content') and message.content.strip():
                         # Identify if it's a user or bot message
@@ -1108,13 +1088,15 @@ Based strictly on the above context, provide a personalized response for {self.c
                             # Fallback - add all messages
                             conversation_history.append(message.content)
             
-            # If no conversation history, return default low interest
-            if not conversation_history:
-                logger.warning("No conversation history found for analysis")
-                return {
-                    'interest_score': 15,
-                    'summary': 'No conversation history available for analysis - user may have just started interaction'
-                }
+            # Check if we have conversation history
+            if not conversation_history or len(conversation_history) < 2:
+                logger.info("Limited conversation history - using basic analysis")
+                # For users with minimal conversation (like button-only interactions)
+                basic_summary = "User had minimal conversation - primarily button interactions"
+                if hasattr(self, 'current_lead') and self.current_lead:
+                    if hasattr(self.current_lead, 'name') and self.current_lead.name:
+                        basic_summary += f" (Name: {self.current_lead.name})"
+                return {"summary": basic_summary, "score": 10}  # Give minimal score for engagement
             
             # Create comprehensive conversation text (use more messages for better analysis)
             conversation_text = "\n".join(conversation_history[-30:])  # Last 30 messages for better context
@@ -1263,8 +1245,8 @@ if __name__ == "__main__":
                     break
                 elif user_question.lower() == 'debug':
                     try:
-                        if hasattr(chatbot.rag_chain, 'memory') and hasattr(chatbot.rag_chain.memory, 'chat_memory'):
-                            history = chatbot.rag_chain.memory.chat_memory.messages
+                        if hasattr(chatbot, 'memory') and hasattr(chatbot.memory, 'chat_memory'):
+                            history = chatbot.memory.chat_memory.messages
                             if history:
                                 print(f"\n--- Conversation History ({len(history)} messages) ---")
                                 for i, msg in enumerate(history):
